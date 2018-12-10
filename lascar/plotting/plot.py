@@ -92,6 +92,6 @@ class plot:
         self.canvas.app.run()
 
 if __name__ == "__main__":
-    a = np.random.normal(0., 500, (20, 20_000))
+    a = np.random.normal(0., 500, (20, 20000))
     plot(a, highlight=3)
     plot(a)
