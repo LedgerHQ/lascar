@@ -251,7 +251,7 @@ class RankProgressionOutputMethod(ScoreProgressionOutputMethod):
                 self.scores[engine.name] = []
                 self.scores_solution[engine.name] = []
 
-            self.scores[engine.name].append([i[2] for i in results_parsed])
+            self.scores[engine.name].append([i[0] for i in results_parsed])
 
             if engine.solution is not None:
                 results_parsed_tmp = [e[0] for e in results_parsed]
