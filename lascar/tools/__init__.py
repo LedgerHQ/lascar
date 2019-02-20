@@ -22,5 +22,5 @@ Copyright 2018 Manuel San Pedro, Victor Servant, Charles Guillemet, Ledger SAS -
 """
 tools
 """
-
+from .aes import Aes
 
