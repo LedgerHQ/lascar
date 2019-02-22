@@ -57,7 +57,7 @@ class Session:
 
         self.name = name
 
-        self.engines = {}
+        self.engines = []
 
         self.add_engine(MeanEngine())
         self.add_engine(VarEngine())
@@ -92,10 +92,10 @@ class Session:
         :param engine: engine to be added
         :return: None
         """
-        if engine.name in self.engines:
+        if engine in self.engines:
             raise ValueError("%s is already an Engine name for this session." % engine.name)
 
-        self.engines.update({engine.name: engine})
+        self.engines.append(engine)
         
     def add_engines(self, engines):
         """
@@ -147,7 +147,7 @@ class Session:
         self._batch_size = batch_size
         self._thread_on_update = thread_on_update
 
-        [engine.initialize(self) for engine in self.engines.values()]
+        [engine.initialize(self) for engine in self.engines]
 
         self.logger.debug('Process with parameters #%d/%d offsets.' % (self._batch_size, self._thread_on_update))
 
@@ -167,11 +167,11 @@ class Session:
             batch = self.container[offsets[0]: offsets[1]]
 
             if not self._thread_on_update:
-                [engine.update(batch) for engine in self.engines.values()]
+                [engine.update(batch) for engine in self.engines]
 
             else:
                 threads = []
-                for engine in self.engines.values():
+                for engine in self.engines:
 
                     thread = Thread(target=engine.update, args=(batch,))
                     threads.append(thread)
@@ -182,7 +182,7 @@ class Session:
             #  OutputMethod: Get results:
             if offsets[1] and offsets[1] in self.output_steps:
                 self.logger.debug("Computing results (output step %d)."%offsets[1])
-                for engine in self.engines.values():
+                for engine in self.engines:
                     results = engine.finalize()
                     if isinstance(results, np.ndarray):
                         results = np.copy(results)
@@ -199,7 +199,20 @@ class Session:
         return self
 
     def __getitem__(self, item):
-        return self.engines[item]
+        """
+        Return registered engines.
+        Can be called by the name f the engine, or the index in the registration list.
+        :param item:
+        :return:
+        """
+
+        if isinstance(item, int):
+            return self.engines[item]
+        elif isinstance(item,str):
+            for engine in self.engines:
+                if engine.name is item:
+                    return engine
+        raise ValueError('No engine named %s.'% str(item))
 
     def _get_progressbar(self):
         if self._progressbar is not None:
