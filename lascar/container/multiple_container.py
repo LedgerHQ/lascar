@@ -57,11 +57,11 @@ class MultipleContainer(Container):
         self._t[current] = i, container.number_of_traces
 
     def __getitem__(self, item):
-        self.logger.debug("__getitem__ with key %s %s" % (str(item), type(item)))
 
+        self.logger.debug("__getitem__ with key %s %s" % (str(item), type(item)))
         if isinstance(item, int):
             container_idx, suboffset = self._t[item]
-            return self._containers[container_idx][suboffset]
+            return self._containers[container_idx][int(suboffset)]
 
         elif isinstance(item, slice):
             # check contiguity:
@@ -101,15 +101,35 @@ class MultipleContainer(Container):
                 suboffsets.append([i, 0, self._containers[i].number_of_traces])
             suboffsets.append([container_offset_end, 0, suboffset_offset_end])
 
-        leakages = np.empty((offset_end - offset_begin,) + self._leakage_abstract.shape, self._leakage_abstract.dtype)
-        values = np.empty((offset_end - offset_begin,) + self._value_abstract.shape, self._value_abstract.dtype)
 
-        i = 0
-        for suboffset in suboffsets:
-            batch = self._containers[suboffset[0]][suboffset[1]:suboffset[2]]
-            leakages[i:i + len(batch)] = batch.leakages
-            values[i:i + len(batch)] = batch.values
-            i += len(batch)
+        # TODO: Find a better solution...
+        leakages = np.concatenate([self._containers[suboffset[0]][suboffset[1]:suboffset[2]].leakages for suboffset in suboffsets] )
+        values = np.concatenate([self._containers[suboffset[0]][suboffset[1]:suboffset[2]].values for suboffset in suboffsets] )
+
+        # leakages = np.zeros((offset_end - offset_begin,) + self._leakage_abstract.shape, self._leakage_abstract.dtype)
+        # values = np.zeros((offset_end - offset_begin,) + self._value_abstract.shape, self._value_abstract.dtype)
+        #
+        #
+        # print("leakages,values", leakages.shape, values.shape)
+        # print()
+        # print([str(i) for i in self._containers])
+        # print("offsets", offset_begin, offset_end)
+        # print("suboffsets", suboffsets)
+        # print("leakages", leakages.shape)
+        # print("values", values.shape)
+        #
+        # i = 0
+        #
+        # print("loop")
+        # for suboffset in suboffsets:
+        #     print("suboffset", suboffset)
+        #     batch = self._containers[suboffset[0]][suboffset[1]:suboffset[2]]
+        #     print('batch',batch)
+        #     print('i:i+len', i, i+len(batch))
+        #     print('leakages[i:i + len(batch)]',leakages[i:i + len(batch)].shape)
+        #     leakages[i:i + len(batch)] = batch.leakages
+        #     values[i:i + len(batch)] = batch.values
+        #     i += len(batch)
         return TraceBatchContainer(leakages, values)
 
     @property
