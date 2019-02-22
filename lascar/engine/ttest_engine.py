@@ -59,3 +59,26 @@ class TTestEngine(PartitionerEngine):
 
         return np.nan_to_num((m0 - m1) / np.sqrt((v0 / self._partition_count[0]) + (v1 / self._partition_count[1])),
                              False)
+
+
+def compute_ttest(*containers):
+    """
+    Compute Welch's TTest from distinct containers: no need of partitioning function, since each container contain only one of each criterion
+
+    :param *containers:
+    :return:
+    """
+    #first compute each mean/variance:
+    from lascar import Session
+    means = []
+    pseudo_vars = []
+
+    for i,container in enumerate(containers):
+        session = Session(container).run()
+        means.append( session['mean'].finalize())
+        pseudo_vars.append( session['var'].finalize()/len(container))
+
+
+    import itertools
+    return {(i,j): (means[i]-means[j]) / np.sqrt(pseudo_vars[i] + pseudo_vars[j])    for i,j in itertools.combinations(range(len(containers),2))}
+
